@@ -14,6 +14,8 @@
 	--fn: #8fb4c9;
 	--bar-h: 56px;
 	--gutter: 16px;
+	--space-section: 72px;
+	--space-heading: 32px;
 	--max: 1080px;
 }
 
@@ -50,7 +52,9 @@ body::before {
 a { color: var(--accent); }
 code { font-family: "JetBrains Mono", monospace; font-size: 0.88em; color: var(--accent); }
 
-main > section { max-width: var(--max); margin: 0 auto; padding: 96px var(--gutter); }
+main { overflow-x: clip; }
+main > section { max-width: var(--max); margin: 0 auto; padding: var(--space-section) var(--gutter); }
+main > section > :last-child { margin-bottom: 0; }
 
 /* Sticky bar: Discord is always visible */
 .bar {
@@ -94,7 +98,7 @@ main > section { max-width: var(--max); margin: 0 auto; padding: 96px var(--gutt
 .discord .discord-state { font-weight: 500; opacity: 0.75; }
 
 /* Hero */
-.hero { padding-top: calc(var(--bar-h) + 96px); }
+.hero { padding-top: calc(var(--bar-h) + var(--space-section)); }
 .eyebrow {
 	margin: 0 0 20px;
 	font: 500 13px "JetBrains Mono", monospace;
@@ -129,6 +133,8 @@ h1 em { font-style: italic; color: var(--accent); }
 .btn.primary:hover { filter: brightness(1.08); }
 .btn.ghost:hover { border-color: var(--muted); }
 
+#bg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+
 /* Hero layout and visual */
 .hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 48px; align-items: center; }
 .hero h1 { font-size: clamp(38px, 5.2vw, 72px); }
@@ -153,19 +159,20 @@ h1 em { font-style: italic; color: var(--accent); }
 	padding-bottom: 0 !important;
 }
 .proof > div { padding: 28px 20px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.proof strong { display: block; font: 600 30px "Fraunces", serif; color: var(--text); }
+.proof strong { display: block; min-height: 2.3em; font: 600 30px/1.15 "Fraunces", serif; color: var(--text); }
 .proof span { font-size: 14px; color: var(--muted); }
 
 /* Section headings */
-.section-title { margin: 0 0 8px; font: 600 clamp(28px, 4vw, 44px)/1.15 "Fraunces", serif; letter-spacing: -0.01em; }
-.section-sub { margin: 0 0 48px; color: var(--muted); max-width: 40em; }
+.section-title { margin: 0 0 var(--space-heading); font: 600 clamp(28px, 4vw, 44px)/1.15 "Fraunces", serif; letter-spacing: -0.01em; }
+.section-title:has(+ .section-sub) { margin-bottom: 10px; }
+.section-sub { margin: 0 0 var(--space-heading); color: var(--muted); max-width: 40em; }
 
 
 
 .tag { margin: 0 0 8px; font: 500 12px "JetBrains Mono", monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
 
 /* Live game band */
-main > .live { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; padding-top: 48px; padding-bottom: 48px; }
+main > .live { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; }
 .live-copy { max-width: 36em; }
 .live h2 { margin: 0 0 8px; font: 600 clamp(26px, 3.4vw, 36px)/1.15 "Fraunces", serif; }
 .live p:last-child { margin: 0; color: var(--muted); }
@@ -208,7 +215,7 @@ main > .live { display: flex; flex-wrap: wrap; align-items: center; justify-cont
 .contact { text-align: center; }
 .contact h2 { margin: 0 0 12px; font: 600 clamp(32px, 5vw, 56px)/1.1 "Fraunces", serif; }
 .contact p { color: var(--muted); }
-.btn.big { margin: 20px auto 8px; padding: 18px 40px; font: 500 24px "JetBrains Mono", monospace; }
+.btn.big { margin: 20px auto 0; padding: 18px 40px; font: 500 24px "JetBrains Mono", monospace; }
 .btn.big .discord-state { margin-top: 2px; font: 500 12px "Inter", sans-serif; opacity: 0.7; }
 .alt { font-size: 15px; }
 
@@ -230,6 +237,7 @@ main > .conventions { max-width: 640px; padding-top: 0; padding-bottom: 72px; }
 
 footer { padding: 32px var(--gutter); text-align: center; color: var(--com); font-size: 13px; border-top: 1px solid var(--line); }
 footer p { margin: 0; }
+footer .tip { margin-top: 6px; font-size: 12px; color: var(--com); opacity: 0.8; }
 
 /* Reveal on scroll */
 .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.6s ease, transform 0.6s ease; }
@@ -240,10 +248,12 @@ footer p { margin: 0; }
 }
 
 @media (max-width: 760px) {
-	main > section { padding: 64px var(--gutter); }
-	.hero { padding-top: calc(var(--bar-h) + 56px); }
+	:root { --space-section: 52px; --space-heading: 24px; }
+	main > section { padding: var(--space-section) var(--gutter); }
+	.hero { padding-top: calc(var(--bar-h) + var(--space-section)); }
 	.hero { grid-template-columns: minmax(0, 1fr); gap: 36px; }
 	.proof { grid-template-columns: 1fr 1fr; }
+	.proof strong { min-height: 0; }
 	.two, 	.path { padding: 22px; }
 	.discord-label { display: none; }
 	.discord { padding: 8px 12px; }

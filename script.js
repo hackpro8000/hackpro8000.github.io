@@ -201,4 +201,114 @@ if ("IntersectionObserver" in window) {
 	requestAnimationFrame(frame);
 })();
 
+// Interactive background: a lantern that follows the cursor over a grid of cave blocks, plus drifting embers.
+(function () {
+	const canvas = document.getElementById("bg");
+	if (!canvas || !canvas.getContext) return;
+	const ctx = canvas.getContext("2d");
+	const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+	const CELL = 40, RADIUS = 240, MAX_BLOCKS = 400, EMBER_COUNT = 36;
+	const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#e8a33d";
+
+	let width = 0, height = 0, cols = 0, rows = 0;
+	const blocks = new Map(); // "col,row" -> placedAt (ms)
+	const lamp = { x: -9999, y: -9999, tx: -9999, ty: -9999, seen: false };
+	const embers = [];
+
+	function fit() {
+		const ratio = Math.min(window.devicePixelRatio || 1, 2);
+		width = window.innerWidth; height = window.innerHeight;
+		canvas.width = Math.round(width * ratio);
+		canvas.height = Math.round(height * ratio);
+		ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+		cols = Math.ceil(width / CELL); rows = Math.ceil(height / CELL);
+	}
+
+	function spawnEmber(randomY) {
+		return { x: Math.random() * width, y: randomY ? Math.random() * height : height + 10, vy: 8 + Math.random() * 16, drift: (Math.random() - 0.5) * 10, size: 1 + Math.random() * 1.6, phase: Math.random() * 6.28 };
+	}
+
+	function onMove(event) {
+		lamp.tx = event.clientX; lamp.ty = event.clientY;
+		if (!lamp.seen) { lamp.x = lamp.tx; lamp.y = lamp.ty; lamp.seen = true; }
+	}
+
+	function onClick(event) {
+		if (event.target.closest("a, button, summary, details, input, textarea, canvas#viz")) return;
+		const id = Math.floor(event.clientX / CELL) + "," + Math.floor(event.clientY / CELL);
+		if (blocks.has(id)) blocks.delete(id);
+		else {
+			if (blocks.size >= MAX_BLOCKS) blocks.delete(blocks.keys().next().value);
+			blocks.set(id, performance.now());
+		}
+	}
+
+	function draw(now, dt) {
+		ctx.clearRect(0, 0, width, height);
+		lamp.x += (lamp.tx - lamp.x) * Math.min(1, dt * 8);
+		lamp.y += (lamp.ty - lamp.y) * Math.min(1, dt * 8);
+		const pad = 3;
+		for (let row = 0; row < rows; row++) {
+			for (let col = 0; col < cols; col++) {
+				const cx = col * CELL + CELL / 2, cy = row * CELL + CELL / 2;
+				const dist = Math.hypot(cx - lamp.x, cy - lamp.y);
+				const lit = dist < RADIUS ? Math.pow(1 - dist / RADIUS, 2) : 0;
+				const placed = blocks.has(col + "," + row);
+				if (!placed && lit < 0.01) { ctx.fillStyle = "rgba(255,255,255,0.012)"; ctx.fillRect(col * CELL + pad, row * CELL + pad, CELL - pad * 2, CELL - pad * 2); continue; }
+				if (placed) {
+					ctx.fillStyle = "rgba(70,56,38," + (0.55 + lit * 0.35).toFixed(3) + ")";
+					ctx.fillRect(col * CELL + pad, row * CELL + pad, CELL - pad * 2, CELL - pad * 2);
+					ctx.strokeStyle = "rgba(232,163,61," + (0.15 + lit * 0.6).toFixed(3) + ")";
+					ctx.lineWidth = 1;
+					ctx.strokeRect(col * CELL + pad + 0.5, row * CELL + pad + 0.5, CELL - pad * 2 - 1, CELL - pad * 2 - 1);
+				} else {
+					ctx.fillStyle = "rgba(232,163,61," + (0.012 + lit * 0.16).toFixed(3) + ")";
+					ctx.fillRect(col * CELL + pad, row * CELL + pad, CELL - pad * 2, CELL - pad * 2);
+				}
+			}
+		}
+		if (lamp.seen) {
+			const glow = ctx.createRadialGradient(lamp.x, lamp.y, 0, lamp.x, lamp.y, RADIUS);
+			glow.addColorStop(0, "rgba(232,163,61,0.10)");
+			glow.addColorStop(1, "rgba(232,163,61,0)");
+			ctx.fillStyle = glow;
+			ctx.fillRect(lamp.x - RADIUS, lamp.y - RADIUS, RADIUS * 2, RADIUS * 2);
+		}
+		for (const ember of embers) {
+			ember.y -= ember.vy * dt;
+			ember.x += (ember.drift + Math.sin(now / 900 + ember.phase) * 6) * dt;
+			if (lamp.seen) {
+				const dx = lamp.x - ember.x, dy = lamp.y - ember.y, d = Math.hypot(dx, dy);
+				if (d < RADIUS && d > 1) { ember.x += (dx / d) * 22 * dt; ember.y += (dy / d) * 22 * dt; }
+			}
+			if (ember.y < -10) Object.assign(ember, spawnEmber(false));
+			const flicker = 0.35 + 0.35 * Math.sin(now / 300 + ember.phase);
+			ctx.fillStyle = "rgba(232,163,61," + flicker.toFixed(3) + ")";
+			ctx.beginPath(); ctx.arc(ember.x, ember.y, ember.size, 0, 6.2832); ctx.fill();
+		}
+	}
+
+	fit();
+	for (let i = 0; i < EMBER_COUNT; i++) embers.push(spawnEmber(true));
+	window.addEventListener("resize", () => { fit(); if (reduced) draw(0, 0); });
+
+	if (reduced) { draw(0, 0); return; }
+
+	window.addEventListener("pointermove", onMove, { passive: true });
+	window.addEventListener("pointerdown", onMove, { passive: true });
+	window.addEventListener("click", onClick);
+
+	let last = performance.now(), running = true;
+	document.addEventListener("visibilitychange", () => { running = !document.hidden; last = performance.now(); });
+	function frame(now) {
+		requestAnimationFrame(frame);
+		if (!running) return;
+		const dt = Math.min((now - last) / 1000, 0.05);
+		if (dt < 1 / 45) return;
+		last = now;
+		draw(now, dt);
+	}
+	requestAnimationFrame(frame);
+})();
+
 document.getElementById("year").textContent = new Date().getFullYear();
