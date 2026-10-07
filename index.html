@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hackpro8000 — Luau Systems Programmer</title>
+<meta name="description" content="Luau programmer for Roblox: gameplay systems, AI and pathfinding, replication, performance and Studio tooling. Works in plain Studio or inside your toolchain.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="bar">
+	<a class="wordmark" href="#top">hackpro8000</a>
+	<button class="discord" type="button" data-copy="tristen0843" aria-label="Copy Discord handle tristen0843">
+		<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-5 4v-4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/></svg>
+		<span class="discord-label">Discord</span>
+		<span class="discord-handle">@tristen0843</span>
+		<span class="discord-state" aria-live="polite"></span>
+	</button>
+</header>
+
+<main id="top">
+
+	<section class="hero">
+		<p class="eyebrow">Roblox · Luau · Systems</p>
+		<h1>Luau systems that stay fast <em>under load.</em></h1>
+		<p class="lede">Gameplay systems, AI, replication and tooling for Roblox. Below is what I can do for yours and how I work.</p>
+		<div class="cta">
+			<a class="btn primary" href="#workflow">How I work with you</a>
+			<a class="btn ghost" href="#contact">Hire me</a>
+		</div>
+	</section>
+
+	<section class="proof" aria-label="At a glance">
+		<div><strong>40k+</strong><span>lines of hand-written Luau</span></div>
+		<div><strong>Game · Plugin</strong><span>from gameplay systems to Studio plugins</span></div>
+		<div><strong>Studio or Rojo</strong><span>I fit your workflow, not the other way round</span></div>
+		<div><strong>Server-authoritative</strong><span>by default, for anything players can exploit</span></div>
+	</section>
+
+	<section class="live" aria-label="Past work">
+		<div class="live-copy">
+			<p class="tag">Past work · Live on Roblox (beta)</p>
+			<h2>Hungry Chests</h2>
+			<p>A fast multiplayer chest battle for up to 30 players: hide your mimics, pick your chests, don't get eaten. Over 22,000 visits so far.</p>
+		</div>
+		<a class="btn primary" href="https://www.roblox.com/games/101290979090480/Hungry-Chests" target="_blank" rel="noopener noreferrer">Play it on Roblox</a>
+	</section>
+
+	<section id="workflow" class="workflow">
+		<h2 class="section-title">I work the way you do</h2>
+		<p class="section-sub">Two common setups, and I'm comfortable in both.</p>
+		<div class="two">
+			<div class="path">
+				<p class="tag">Straight in Roblox Studio</p>
+				<h3>No toolchain required</h3>
+				<p>You don't need to install or learn anything. I work directly in Studio, keep logic in clearly named ModuleScripts, and hand back something you can open, read and edit yourself.</p>
+				<ul>
+					<li>Clean, commented structure that a non-programmer can navigate</li>
+					<li>Systems that drop into an existing place without rewriting it</li>
+					<li>Plain explanations of what each script does and where to change it</li>
+				</ul>
+			</div>
+			<div class="path">
+				<p class="tag">Your own toolchain</p>
+				<h3>Specific tooling, followed exactly</h3>
+				<p>If your project already has conventions, I follow them. I've run full Rojo projects.</p>
+				<ul>
+					<li>Rojo, Wally and Aftman projects with luau-lsp and strict types</li>
+					<li>Lune scripts for build and data pipelines</li>
+					<li>Custom tooling when the job needs it, such as a Studio plugin</li>
+				</ul>
+			</div>
+		</div>
+	</section>
+
+	<section class="can">
+		<h2 class="section-title">What I can build</h2>
+		<div class="grid">
+			<div><h3>Gameplay systems</h3><p>Objectives and progression, inventories, turn-based flow, state machines and economies, including escalating-cost land purchases.</p></div>
+			<div><h3>AI and pathfinding</h3><p>A* over terrain that players change, perception and chase states, and kinematic movement along routes.</p></div>
+			<div><h3>Networking and replication</h3><p>Server-authoritative state, revisioned snapshots that reject stale data, action-based replication and typed remotes.</p></div>
+			<div><h3>Performance</h3><p>Work spread across frames with cancellation, greedy voxel meshing, and bounded searches that can't hang a server.</p></div>
+			<div><h3>Data and saving</h3><p>DataStore profiles, versioned saves, and strict validation of untrusted data before it touches your game.</p></div>
+			<div><h3>User interface</h3><p>HUDs, inventory and objective screens, built with React-Lua or a custom component library.</p></div>
+			<div><h3>Characters and animation</h3><p>Custom physics character controllers, climbing, procedural walking with IK, and first-person view models.</p></div>
+			<div><h3>Studio plugins</h3><p>Dockable tools with undo and redo, live previews rendered into an EditableImage, and exportable output.</p></div>
+		</div>
+	</section>
+
+	<section class="patterns">
+		<h2 class="section-title">How I build</h2>
+		<p class="section-sub">The habits that keep a growing game changeable.</p>
+		<ol class="rules">
+			<li><strong>The server decides, clients display.</strong> Anything players could exploit is validated and owned on the server.</li>
+			<li><strong>State changes go through named actions.</strong> That makes every change easy to hook, replicate, test and undo.</li>
+			<li><strong>Validate at the boundary and fail loudly.</strong> Bad data produces an error that names the problem, not a mystery three systems later.</li>
+			<li><strong>Layers only depend downward.</strong> Game logic composes reusable systems, and systems don't reach back up into the game.</li>
+			<li><strong>Budget the work.</strong> Heavy jobs yield on a time slice and can be cancelled, so players never see a freeze.</li>
+			<li><strong>Type what I can.</strong> Strict Luau on the larger projects catches mistakes before a playtest does.</li>
+		</ol>
+	</section>
+
+	<section class="faq">
+		<h2 class="section-title">Common questions</h2>
+		<div class="qa">
+			<details>
+				<summary>Do I need Rojo or any external tools?</summary>
+				<p>No. I can work entirely inside Roblox Studio and hand back ModuleScripts you can read and edit there. If your project already uses Rojo, Wally or Aftman, I'll work inside that setup and follow your conventions.</p>
+			</details>
+			<details>
+				<summary>What kind of work do you take on?</summary>
+				<p>New gameplay systems, AI and pathfinding, replication and networking, performance work, UI, character controllers and Studio plugins. I can also build on or tidy up an existing codebase.</p>
+			</details>
+			<details>
+				<summary>Can you work with code I already have?</summary>
+				<p>Yes. I read what's there first, follow its structure and naming, and keep changes focused so you can see exactly what I touched.</p>
+			</details>
+			<details>
+				<summary>How do you stop players from exploiting my game?</summary>
+				<p>The server owns anything that matters. Clients send requests, the server validates them and decides the outcome, and clients only display the result.</p>
+			</details>
+			<details>
+				<summary>How do you keep a game from lagging or freezing?</summary>
+				<p>Heavy work, like loading a big map, is spread across frames on a time budget and can be cancelled. Searches such as pathfinding are capped so one expensive request can't stall the server.</p>
+			</details>
+			<details>
+				<summary>Will I be able to understand and edit what you build?</summary>
+				<p>That's the aim. I keep scripts small and clearly named, comment the parts that aren't obvious, and explain where to change things.</p>
+			</details>
+			<details>
+				<summary>What do you need from me to get started?</summary>
+				<p>A short description of what you want the game or system to do, and access to the place or repository if you already have one. I'll ask follow-up questions on Discord before I begin.</p>
+			</details>
+			<details>
+				<summary>Rates, availability and timezone?</summary>
+				<p>I'm on <strong>GMT+8</strong> and available <strong>1 PM to 8 PM</strong> that time. Rates depend on the project, so message me on Discord at <strong>@tristen0843</strong> and we'll sort it out.</p>
+			</details>
+		</div>
+	</section>
+
+	<section id="contact" class="contact">
+		<h2>Hiring for Roblox work?</h2>
+		<p>Message me on Discord. It's the fastest way to reach me.</p>
+		<button class="btn primary big" type="button" data-copy="tristen0843">
+			<span class="copy-label">@tristen0843</span>
+			<span class="discord-state" aria-live="polite">Click to copy</span>
+		</button>
+	</section>
+
+	<section class="about">
+		<h2>About</h2>
+		<p>I'm hackpro8000, a Luau programmer who likes the unglamorous parts of games: the graph search, the frame budget, the validation that stops a bad build before players see it.</p>
+	</section>
+
+	<section class="conventions">
+		<details>
+			<summary>Coding conventions</summary>
+			<dl>
+				<dt>Structure</dt>
+				<dd>Three layers: Core, Systems, Game. Dependencies only point downward. Core knows almost nothing about the game, Systems are reusable capabilities, and Game composes them into something specific.</dd>
+				<dt>Composition</dt>
+				<dd>Composition over inheritance. I only generalise something once it has real, recurring reuse, and I don't build abstractions for hypothetical needs. A mechanism should survive a complete change of theme.</dd>
+				<dt>Naming</dt>
+				<dd>Full, descriptive names (<code>destinationAlpha</code>, not <code>da</code>). PascalCase for methods and named error reasons, camelCase for locals, UPPER_SNAKE for constants, and a leading underscore for private fields. Folders are CapitalizedCamelCase. I only use words like Service, Manager or Handler when they're accurate.</dd>
+				<dt>Types</dt>
+				<dd>New modules start with <code>--!strict</code>. I annotate where it adds safety or clarity, and I avoid type gymnastics that make code harder to read.</dd>
+				<dt>Style</dt>
+				<dd>Obvious over clever. Early returns over deep nesting. A short header comment says what a file is for, and other comments explain intent, constraints and edge cases rather than narrating the code.</dd>
+				<dt>Ownership</dt>
+				<dd>Every object has a visible creator, owner and destroyer. Dependencies are passed in explicitly, with no hidden registries, service locators or global containers. Anything that owns connections, tasks or instances cleans them up on <code>Destroy</code>.</dd>
+				<dt>Errors</dt>
+				<dd>Listener errors are never swallowed silently. Bad input is rejected with a named reason. A failed startup stops loudly, and one failing background task doesn't take down unrelated ones.</dd>
+				<dt>Startup</dt>
+				<dd>Load everything first, then start anything. Startup is deterministic and readable, so you can see what ran and in what order.</dd>
+				<dt>Dependencies</dt>
+				<dd>No external framework unless it solves a concrete problem that a small local solution can't. The framework serves the game, not the other way round.</dd>
+				<dt>Project layout</dt>
+				<dd>Source on the filesystem rather than only inside Studio, with a minimal folder tree and predictable paths. Important logic lives in version control.</dd>
+			</dl>
+		</details>
+	</section>
+
+</main>
+
+<footer><p>© <span id="year"></span> hackpro8000</p></footer>
+
+<script src="script.js"></script>
+</body>
+</html>
