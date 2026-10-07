@@ -201,102 +201,142 @@ if ("IntersectionObserver" in window) {
 	requestAnimationFrame(frame);
 })();
 
-// Interactive background: a lantern that follows the cursor over a grid of cave blocks, plus drifting embers.
+// Interactive background: particles that swirl around the cursor, are pulled in by left click, burst on release and are pushed away by right click.
 (function () {
 	const canvas = document.getElementById("bg");
 	if (!canvas || !canvas.getContext) return;
 	const ctx = canvas.getContext("2d");
 	const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-	const CELL = 40, RADIUS = 240, MAX_BLOCKS = 400, EMBER_COUNT = 36;
-	const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#e8a33d";
+	const RADIUS = 230, LINK = 85, BURST_RADIUS = 420;
+	const IGNORE = "a, button, summary, input, textarea, canvas#viz";
+	const KEEP_MENU = "a, button, summary, input, textarea, p, h1, h2, h3, li, dt, dd, span, strong, em, code, figcaption, canvas#viz";
 
-	let width = 0, height = 0, cols = 0, rows = 0;
-	const blocks = new Map(); // "col,row" -> placedAt (ms)
-	const lamp = { x: -9999, y: -9999, tx: -9999, ty: -9999, seen: false };
-	const embers = [];
+	let width = 0, height = 0;
+	const particles = [];
+	const pointer = { x: -9999, y: -9999, seen: false, left: false, right: false, holdStart: 0 };
+
+	function makeParticle() {
+		return { x: Math.random() * width, y: Math.random() * height, vx: 0, vy: 0, size: 0.8 + Math.random() * 1.6 };
+	}
 
 	function fit() {
-		const ratio = Math.min(window.devicePixelRatio || 1, 2);
+		const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
 		width = window.innerWidth; height = window.innerHeight;
 		canvas.width = Math.round(width * ratio);
 		canvas.height = Math.round(height * ratio);
 		ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-		cols = Math.ceil(width / CELL); rows = Math.ceil(height / CELL);
+		const target = Math.max(60, Math.min(240, Math.round((width * height) / 7500)));
+		while (particles.length < target) particles.push(makeParticle());
+		particles.length = target;
 	}
 
-	function spawnEmber(randomY) {
-		return { x: Math.random() * width, y: randomY ? Math.random() * height : height + 10, vy: 8 + Math.random() * 16, drift: (Math.random() - 0.5) * 10, size: 1 + Math.random() * 1.6, phase: Math.random() * 6.28 };
-	}
-
-	function onMove(event) {
-		lamp.tx = event.clientX; lamp.ty = event.clientY;
-		if (!lamp.seen) { lamp.x = lamp.tx; lamp.y = lamp.ty; lamp.seen = true; }
-	}
-
-	function onClick(event) {
-		if (event.target.closest("a, button, summary, details, input, textarea, canvas#viz")) return;
-		const id = Math.floor(event.clientX / CELL) + "," + Math.floor(event.clientY / CELL);
-		if (blocks.has(id)) blocks.delete(id);
-		else {
-			if (blocks.size >= MAX_BLOCKS) blocks.delete(blocks.keys().next().value);
-			blocks.set(id, performance.now());
+	function burst() {
+		const held = Math.min(1.2, Math.max(0.25, (performance.now() - pointer.holdStart) / 1000));
+		for (const p of particles) {
+			const dx = p.x - pointer.x, dy = p.y - pointer.y, d = Math.hypot(dx, dy);
+			if (d < BURST_RADIUS && d > 0.5) {
+				const push = held * 900 * (1 - d / BURST_RADIUS);
+				p.vx += (dx / d) * push; p.vy += (dy / d) * push;
+			}
 		}
 	}
 
-	function draw(now, dt) {
-		ctx.clearRect(0, 0, width, height);
-		lamp.x += (lamp.tx - lamp.x) * Math.min(1, dt * 8);
-		lamp.y += (lamp.ty - lamp.y) * Math.min(1, dt * 8);
-		const pad = 3;
-		for (let row = 0; row < rows; row++) {
-			for (let col = 0; col < cols; col++) {
-				const cx = col * CELL + CELL / 2, cy = row * CELL + CELL / 2;
-				const dist = Math.hypot(cx - lamp.x, cy - lamp.y);
-				const lit = dist < RADIUS ? Math.pow(1 - dist / RADIUS, 2) : 0;
-				const placed = blocks.has(col + "," + row);
-				if (!placed && lit < 0.01) { ctx.fillStyle = "rgba(255,255,255,0.012)"; ctx.fillRect(col * CELL + pad, row * CELL + pad, CELL - pad * 2, CELL - pad * 2); continue; }
-				if (placed) {
-					ctx.fillStyle = "rgba(70,56,38," + (0.55 + lit * 0.35).toFixed(3) + ")";
-					ctx.fillRect(col * CELL + pad, row * CELL + pad, CELL - pad * 2, CELL - pad * 2);
-					ctx.strokeStyle = "rgba(232,163,61," + (0.15 + lit * 0.6).toFixed(3) + ")";
-					ctx.lineWidth = 1;
-					ctx.strokeRect(col * CELL + pad + 0.5, row * CELL + pad + 0.5, CELL - pad * 2 - 1, CELL - pad * 2 - 1);
-				} else {
-					ctx.fillStyle = "rgba(232,163,61," + (0.012 + lit * 0.16).toFixed(3) + ")";
-					ctx.fillRect(col * CELL + pad, row * CELL + pad, CELL - pad * 2, CELL - pad * 2);
+	function update(dt, t) {
+		for (const p of particles) {
+			const angle = (Math.sin(p.x * 0.0035 + t * 0.00021) + Math.cos(p.y * 0.0045 - t * 0.00017)) * Math.PI;
+			p.vx += Math.cos(angle) * 14 * dt;
+			p.vy += Math.sin(angle) * 14 * dt - 3 * dt;
+			if (pointer.seen) {
+				const dx = pointer.x - p.x, dy = pointer.y - p.y, d = Math.hypot(dx, dy);
+				const reach = pointer.left ? RADIUS * 1.5 : pointer.right ? RADIUS * 1.3 : RADIUS;
+				if (d < reach && d > 1) {
+					const k = 1 - d / reach, nx = dx / d, ny = dy / d;
+					let pull = 40 * k, swirl = 90 * k;
+					if (pointer.left) { pull = 420 * k; swirl = 150 * k; }
+					else if (pointer.right) { pull = -620 * k * k; swirl = 0; }
+					p.vx += (nx * pull - ny * swirl) * dt;
+					p.vy += (ny * pull + nx * swirl) * dt;
+				}
+			}
+			const damp = Math.max(0, 1 - 1.7 * dt);
+			p.vx *= damp; p.vy *= damp;
+			const speed = Math.hypot(p.vx, p.vy);
+			if (speed > 520) { p.vx *= 520 / speed; p.vy *= 520 / speed; }
+			p.x += p.vx * dt; p.y += p.vy * dt;
+			if (p.x < -10) p.x = width + 10; else if (p.x > width + 10) p.x = -10;
+			if (p.y < -10) p.y = height + 10; else if (p.y > height + 10) p.y = -10;
+		}
+	}
+
+	function draw() {
+		ctx.globalCompositeOperation = "destination-out";
+		ctx.fillStyle = "rgba(0,0,0,0.24)";
+		ctx.fillRect(0, 0, width, height);
+		ctx.globalCompositeOperation = "source-over";
+		ctx.lineWidth = 1;
+		for (let i = 0; i < particles.length; i++) {
+			const a = particles[i];
+			for (let j = i + 1; j < particles.length; j++) {
+				const b = particles[j];
+				const dx = a.x - b.x;
+				if (dx > LINK || dx < -LINK) continue;
+				const dy = a.y - b.y;
+				if (dy > LINK || dy < -LINK) continue;
+				const d = Math.hypot(dx, dy);
+				if (d < LINK) {
+					ctx.strokeStyle = "rgba(232,163,61," + ((1 - d / LINK) * 0.2).toFixed(3) + ")";
+					ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
 				}
 			}
 		}
-		if (lamp.seen) {
-			const glow = ctx.createRadialGradient(lamp.x, lamp.y, 0, lamp.x, lamp.y, RADIUS);
-			glow.addColorStop(0, "rgba(232,163,61,0.10)");
-			glow.addColorStop(1, "rgba(232,163,61,0)");
-			ctx.fillStyle = glow;
-			ctx.fillRect(lamp.x - RADIUS, lamp.y - RADIUS, RADIUS * 2, RADIUS * 2);
+		for (const p of particles) {
+			const speed = Math.min(1, Math.hypot(p.vx, p.vy) / 260);
+			ctx.fillStyle = "rgba(232,163,61," + (0.3 + speed * 0.6).toFixed(3) + ")";
+			ctx.beginPath(); ctx.arc(p.x, p.y, p.size + speed * 0.8, 0, 6.2832); ctx.fill();
 		}
-		for (const ember of embers) {
-			ember.y -= ember.vy * dt;
-			ember.x += (ember.drift + Math.sin(now / 900 + ember.phase) * 6) * dt;
-			if (lamp.seen) {
-				const dx = lamp.x - ember.x, dy = lamp.y - ember.y, d = Math.hypot(dx, dy);
-				if (d < RADIUS && d > 1) { ember.x += (dx / d) * 22 * dt; ember.y += (dy / d) * 22 * dt; }
-			}
-			if (ember.y < -10) Object.assign(ember, spawnEmber(false));
-			const flicker = 0.35 + 0.35 * Math.sin(now / 300 + ember.phase);
-			ctx.fillStyle = "rgba(232,163,61," + flicker.toFixed(3) + ")";
-			ctx.beginPath(); ctx.arc(ember.x, ember.y, ember.size, 0, 6.2832); ctx.fill();
+		if (pointer.seen) {
+			const ring = pointer.left ? 8 : pointer.right ? 26 : 14;
+			ctx.strokeStyle = "rgba(232,163,61," + (pointer.left || pointer.right ? 0.7 : 0.35) + ")";
+			ctx.beginPath(); ctx.arc(pointer.x, pointer.y, ring, 0, 6.2832); ctx.stroke();
 		}
 	}
 
 	fit();
-	for (let i = 0; i < EMBER_COUNT; i++) embers.push(spawnEmber(true));
-	window.addEventListener("resize", () => { fit(); if (reduced) draw(0, 0); });
+	window.addEventListener("resize", fit);
 
-	if (reduced) { draw(0, 0); return; }
+	if (reduced) {
+		ctx.fillStyle = "rgba(232,163,61,0.35)";
+		for (const p of particles) { ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, 6.2832); ctx.fill(); }
+		return;
+	}
 
-	window.addEventListener("pointermove", onMove, { passive: true });
-	window.addEventListener("pointerdown", onMove, { passive: true });
-	window.addEventListener("click", onClick);
+	function track(event) {
+		pointer.x = event.clientX; pointer.y = event.clientY; pointer.seen = true;
+	}
+	function release() { if (pointer.left) burst(); pointer.left = false; pointer.right = false; }
+
+	window.addEventListener("pointermove", (event) => {
+		track(event);
+		if (event.pointerType === "mouse") {
+			if (pointer.left && !(event.buttons & 1)) { burst(); pointer.left = false; }
+			if (pointer.right && !(event.buttons & 2)) pointer.right = false;
+		}
+	}, { passive: true });
+	window.addEventListener("pointerdown", (event) => {
+		track(event);
+		if (event.target.closest(IGNORE)) return;
+		if (event.button === 0) { pointer.left = true; pointer.holdStart = performance.now(); }
+		else if (event.button === 2) pointer.right = true;
+	}, { passive: true });
+	window.addEventListener("pointerup", (event) => {
+		if (event.button === 0) { if (pointer.left) burst(); pointer.left = false; }
+		else if (event.button === 2) pointer.right = false;
+	}, { passive: true });
+	window.addEventListener("pointercancel", release);
+	window.addEventListener("blur", release);
+	window.addEventListener("contextmenu", (event) => {
+		if (!event.target.closest(KEEP_MENU)) event.preventDefault();
+	});
 
 	let last = performance.now(), running = true;
 	document.addEventListener("visibilitychange", () => { running = !document.hidden; last = performance.now(); });
@@ -304,9 +344,10 @@ if ("IntersectionObserver" in window) {
 		requestAnimationFrame(frame);
 		if (!running) return;
 		const dt = Math.min((now - last) / 1000, 0.05);
-		if (dt < 1 / 45) return;
+		if (dt < 1 / 50) return;
 		last = now;
-		draw(now, dt);
+		update(dt, now);
+		draw();
 	}
 	requestAnimationFrame(frame);
 })();
